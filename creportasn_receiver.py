@@ -35,6 +35,7 @@ class exResource(coapResource):
         print "tx: {0}, txACK: {1}".format(tx, txACK)
         print "ETX: {0}".format(float(tx) / float(txACK))
         print "PDR: {0}".format(float(txACK) / float(tx))
+        print "---------------------------------------------------------"
 
         respCode = coapDefines.COAP_RC_2_01_CREATED
         respOptions = []

@@ -20,6 +20,8 @@ class CReportASNResource(Resource):
         packet_sequence = payload[19]
         last_success_left = payload[17]
         error_counter = payload[18]
+
+
         print "received from {0} : {1}".format(request.source[0], str(payload))
         print "Start: {0}; End: {1}; diff: {2}".format(start_asn, end_asn, end_asn - start_asn)
         print "Slot offset: {0}".format(end_asn % 101)
@@ -32,5 +34,12 @@ class CReportASNResource(Resource):
         print "errorCounter: {0}".format(error_counter)
         print "ETX: {0}".format(float(tx) / float(txACK))
         print "PDR: {0}".format(float(txACK) / float(tx))
+        print "---------------------------------------------------------"
+        print "counter:{0},{1}".format(payload[20], payload[21])
+        print "int_temp:{0},{1}".format(payload[22], payload[23])
+        print "ext_temp:{0},{1}".format(payload[24], payload[25])
+        print "ext_pyra:{0},{1}".format(payload[26], payload[27])
+        print "int_volt:{0},{1}".format(payload[28], payload[29])
+        print "gpio_pulse:{0},{1}".format(payload[30], payload[31])
         print "---------------------------------------------------------"
         return self

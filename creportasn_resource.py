@@ -20,6 +20,12 @@ class CReportASNResource(Resource):
         packet_sequence = payload[19]
         last_success_left = payload[17]
         error_counter = payload[18]
+        counter = payload[21]*256+payload[20]
+        int_temp = payload[23]*256+payload[22]
+        ext_temp = payload[25]*256+payload[24]
+        ext_pyra = payload[27]*256+payload[26]
+        int_volt = payload[29]*256+payload[28]
+        gpio_pulse = payload[31]*256+payload[30]
 
 
         print "received from {0} : {1}".format(request.source[0], str(payload))
@@ -35,11 +41,11 @@ class CReportASNResource(Resource):
         print "ETX: {0}".format(float(tx) / float(txACK))
         print "PDR: {0}".format(float(txACK) / float(tx))
         print "---------------------------------------------------------"
-        print "counter:{0},{1}".format(payload[20], payload[21])
-        print "int_temp:{0},{1}".format(payload[22], payload[23])
-        print "ext_temp:{0},{1}".format(payload[24], payload[25])
-        print "ext_pyra:{0},{1}".format(payload[26], payload[27])
-        print "int_volt:{0},{1}".format(payload[28], payload[29])
-        print "gpio_pulse:{0},{1}".format(payload[30], payload[31])
+        print "counter:{0}".format(counter)
+        print "int_temp:{0}".format(int_temp)
+        print "ext_temp:{0}".format(ext_temp)
+        print "ext_pyra:{0}".format(ext_pyra)
+        print "int_volt:{0}".format(int_volt)
+        print "gpio_pulse:{0}".format(gpio_pulse)
         print "---------------------------------------------------------"
         return self

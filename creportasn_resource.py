@@ -27,6 +27,9 @@ class CReportASNResource(Resource):
         int_volt = payload[29]*256+payload[28]
         gpio_pulse = payload[31]*256+payload[30]
 
+        hisAddress = request.source[0]
+        hisPort = request.source[1]
+
 
         print "received from {0} : {1}".format(request.source[0], str(payload))
         print "Start: {0}; End: {1}; diff: {2}".format(start_asn, end_asn, end_asn - start_asn)

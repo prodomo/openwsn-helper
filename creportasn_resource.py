@@ -15,41 +15,60 @@ class CReportASNResource(Resource):
 
     def render_PUT(self, request):
         payload = map(ord, request.payload)
-        start_asn = 0
-        end_asn = 0
-        for i in range(0, 5, 1):
-            start_asn += pow(256, i) * payload[2 + i]
-            end_asn += pow(256, i) * payload[7 + i]
-        numDesync = payload[12]
-        myrank = payload[13] + payload[14] * 256
-        tx = payload[15]
-        txACK = payload[16]
-        packet_sequence = payload[19]
-        last_success_left = payload[17]
-        error_counter = payload[18]     
-        counter = payload[21]*256+payload[20]
-        int_temp = payload[23]*256+payload[22]
-        ext_temp = payload[25]*256+payload[24]
-        ext_pyra = payload[27]*256+payload[26]
-        int_volt = payload[29]*256+payload[28]
-        gpio_pulse = payload[31]*256+payload[30]
+        # start_asn = 0
+        # end_asn = 0
+        # for i in range(0, 5, 1):
+        #     start_asn += pow(256, i) * payload[2 + i]
+        #     end_asn += pow(256, i) * payload[7 + i]
+        # numDesync = payload[12]
+        # myrank = payload[13] + payload[14] * 256
+        # tx = payload[15]
+        # txACK = payload[16]
+        # packet_sequence = payload[19]
+        # last_success_left = payload[17]
+        # error_counter = payload[18]     
+        # counter = payload[21]*256+payload[20]
+        # int_temp = payload[23]*256+payload[22]
+        # ext_temp = payload[25]*256+payload[24]
+        # ext_pyra = payload[27]*256+payload[26]
+        # int_volt = payload[29]*256+payload[28]
+        # gpio_pulse = payload[31]*256+payload[30]
+
+        myrank = payload[2] + payload[3] * 256
+        parentAddr = payload[5]+payload[4]*256
+        parantRank = payload[7]+payload[6]*256
+        tx = payload[8]
+        txACK = payload[9]
+        parentRssi = payload[10]
+        error_counter = payload[11]
+        counter = payload[13]*256+payload[12]
+        int_temp = payload[15]*256+payload[14]
+        ext_temp = payload[17]*256+payload[16]
+        ext_pyra = payload[19]*256+payload[18]
+        int_volt = payload[21]*256+payload[20]
+        gpio_pulse = payload[23]*256+payload[22]
+        PDR=float(txACK) / float(tx)
+
 
         systemTime = datetime.datetime.now()
         hisAddress = request.source[0]
         hisPort = request.source[1]
 
         print "received from {0} : {1}".format(request.source[0], str(payload))
-        print "Start: {0}; End: {1}; diff: {2}".format(start_asn, end_asn, end_asn - start_asn)
-        print "Slot offset: {0}".format(end_asn % 101)
+        # print "Start: {0}; End: {1}; diff: {2}".format(start_asn, end_asn, end_asn - start_asn)
+        # print "Slot offset: {0}".format(end_asn % 101)
         print "System time: {0}".format(systemTime)
-        print "numDesync: {0}".format(numDesync)
+        # print "numDesync: {0}".format(numDesync)
         print "myrank: {0}".format(myrank)
-        print "tx: {0}, txACK: {1}".format(tx, txACK)
-        print "packet sequence: {0}".format(packet_sequence)
-        print "last success left: {0}".format(last_success_left)
+        print "parent addr: {0}".format(parentAddr)
+        print "parent rank: {0}".format(parantRank)
+        print "parent rssi: {0}".format(parentRssi)
+        print "tx: {0}, txACK: {1}, linkPDR:{2}".format(tx, txACK, PDR)
+        # print "packet sequence: {0}".format(packet_sequence)
+        # print "last success left: {0}".format(last_success_left)
         print "errorCounter: {0}".format(error_counter)
-        print "ETX: {0}".format(float(tx) / float(txACK))
-        print "PDR: {0}".format(float(txACK) / float(tx))
+        # print "ETX: {0}".format(float(tx) / float(txACK))
+        # print "PDR: {0}".format(float(txACK) / float(tx))
         print "---------------------------------------------------------"
         print "counter:{0}".format(counter)
         print "int_temp:{0}".format(int_temp)
@@ -114,10 +133,16 @@ class CReportASNResource(Resource):
             ext_temperature, pyranometer, datetime, int_temperature, battery_volt) \
             VALUES ('%d', '%s', '%.2f', '%d', '%s', '%.2f', '%.2f')" %\
             (counter, address, temp_real, pyra_raw, currtime, i_temp_real, pyra_real)
+        
+        topology_sql = "INSERT INTO itri_topology_mote(mac_addr, my_rank, p_mac_addr, p_rank, p_rssi, PDR, tx, txack, error_counter, sn, datetime) \
+        VALUES('%s','%d', '%s', '%d', '%d', '%.2f','%d', '%d', '%d', '%d','%s')" \
+        %(address, myrank, hex(parentAddr), parantRank, parentRssi, PDR, tx, txACK, error_counter, counter, currtime)
+
         try:
             # Execute the SQL command
             cursor.execute(sql)
             cursor.execute(rps_sql)
+            cursor.execute(topology_sql)
             # Commit your changes in the database
             db.commit()
         except:
@@ -127,7 +152,7 @@ class CReportASNResource(Resource):
         # disconnect from server
         db.close()
 
-        print 'insert DB ok !!'    
+        print 'insert DB ok !!'
 
         return self
 

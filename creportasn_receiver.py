@@ -11,7 +11,7 @@ class CoAPServer(CoAP):
     def __init__(self, host, port):
         CoAP.__init__(self, (host, port))
         self.add_resource('reportasn', CReportASNResource())
-        #self.add_resource('uinject_coap', UinjectCoapResource())
+        # self.add_resource('uinject_coap', UinjectCoapResource())
 
 server = CoAPServer(UDP_IP, UDP_PORT)
 try:

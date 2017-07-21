@@ -36,17 +36,18 @@ class CReportASNResource(Resource):
 
         myrank = payload[2] + payload[3] * 256
         parentAddr = payload[5]+payload[4]*256
-        parantRank = payload[7]+payload[6]*256
+        parantRank = payload[6]+payload[7]*256
         tx = payload[8]
         txACK = payload[9]
-        parentRssi = payload[10]
-        error_counter = payload[11]
-        counter = payload[13]*256+payload[12]
-        int_temp = payload[15]*256+payload[14]
-        ext_temp = payload[17]*256+payload[16]
-        ext_pyra = payload[19]*256+payload[18]
-        int_volt = payload[21]*256+payload[20]
-        gpio_pulse = payload[23]*256+payload[22]
+        parentRssi = 0-payload[10]
+        last_success_left = payload[11]
+        error_counter = payload[12]
+        counter = payload[13]+payload[14]*256
+        int_temp = payload[15]+payload[16]*256
+        ext_temp = payload[17]+payload[18]*256
+        ext_pyra = payload[19]+payload[20]*256
+        int_volt = payload[21]+payload[22]*256
+        gpio_pulse = payload[23]+payload[24]*256
         PDR=float(txACK) / float(tx)
 
 
@@ -60,7 +61,7 @@ class CReportASNResource(Resource):
         print "System time: {0}".format(systemTime)
         # print "numDesync: {0}".format(numDesync)
         print "myrank: {0}".format(myrank)
-        print "parent addr: {0}".format(parentAddr)
+        print "parent addr: {0}".format(hex(parentAddr))
         print "parent rank: {0}".format(parantRank)
         print "parent rssi: {0}".format(parentRssi)
         print "tx: {0}, txACK: {1}, linkPDR:{2}".format(tx, txACK, PDR)

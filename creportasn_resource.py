@@ -1,18 +1,23 @@
 import datetime
 import sys
 import struct
-import mysql.connector
+# import mysql.connector
 import ConfigParser
+import MySQLdb
 
 from coapthon.resources.resource import Resource
 
-config = ConfigParser.RawConfigParser()
-config.read('config.cfg')
+# config = ConfigParser.RawConfigParser()
+# config.read('config.cfg')
 
-cnx = mysql.connector.connect(user=config.get('database', 'username'),
-                              database=config.get('database', 'database'),
-                              password=config.get('database', 'password'))
-cursor = cnx.cursor()
+
+# db = MySQLdb.connect("localhost","root","sakimaru","ITRI_OpenWSN" )
+# cursor = db.cursor()
+
+# cnx = mysql.connector.connect(user=config.get('database', 'username'),
+#                               database=config.get('database', 'database'),
+#                               password=config.get('database', 'password'))
+# cursor = cnx.cursor()
 
 
 class CReportASNResource(Resource):
@@ -54,6 +59,7 @@ class CReportASNResource(Resource):
             error_counter = data[15]
             last_callback_sequence = data[17]
             parent_rssi = data[18]
+
             print "received from {0}".format(mote)
             print "Start: {0}; End: {1}; diff: {2}".format(start_asn, end_asn, end_asn - start_asn)
             print "Slot offset: {0}".format(end_asn % 101)
@@ -70,13 +76,46 @@ class CReportASNResource(Resource):
             print "parent rssi: {0}".format(parent_rssi)
             print "---------------------------------------------------------"
 
-            command = "INSERT INTO `delay` (`id`, `mote`, `start_asn`, `end_asn`, `diff`, `numDesync`, `myRank`, `tx`, `txACK`, `packet_sequence`, `last_success_left`, `error_counter`, `last_callback_sequence`, `parent_rssi`, `created_at`) VALUE (NULL, '{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}', '{11}', '{12}', NULL)".format(
+
+            if txACK == 0:
+                PDR=0
+            else:
+                PDR=float(txACK) / float(tx)
+
+            systemTime = datetime.datetime.now()
+            currtime = systemTime.strftime("%Y-%m-%d %H:%M:%S")
+            hisAddress = request.source[0]
+            hisPort = request.source[1]
+            hisAddress_split = hisAddress.split(':')
+            address = ''
+            for i in hisAddress_split[2:]:
+                address += '%04x' % int(i, 16)
+
+            parentRssi=parent_rssi
+            parantRank=0
+            parentAddr=0
+            counter = packet_sequence
+
+            db = MySQLdb.connect("localhost","root","sakimaru","ITRI_OpenWSN" )
+            cursor = db.cursor()
+
+            command = "INSERT INTO `delay` (`id`, `mote`, `start_asn`, `end_asn`, `diff`, `numDesync`, `myRank`, `tx`, `txACK`, `packet_sequence`, `last_success_left`, `error_counter`, `last_callback_sequence`, `parent_rssi`, `created_at`) VALUE (NULL, '{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}', '{11}', '{12}', '{13}')".format(
                 mote, start_asn, end_asn, end_asn - start_asn, numDesync, myrank, tx, txACK, packet_sequence,
-                last_success_left, error_counter, last_callback_sequence, parent_rssi)
+                last_success_left, error_counter, last_callback_sequence, parent_rssi, currtime)
 
-            cursor.execute(command)
-            cnx.commit()
+            topology_sql = "INSERT INTO itri_topology_mote(mac_addr, my_rank, p_mac_addr, p_rank, p_rssi, PDR, tx, txack, error_counter, sn, datetime) VALUES ('%s','%d', '%s', '%d', '%d', '%.2f','%d', '%d', '%d', '%d','%s') "%(address, myrank, hex(parentAddr), parantRank, parentRssi, PDR, tx, txACK, error_counter, counter, currtime)
 
+
+
+            try:
+                cursor.execute(command)
+                cursor.execute(topology_sql)
+                db.commit()
+                print "insert DB ok"
+            except:
+                db.rollback()
+        
+            db.close()
         except:
             print "oops"
             print "Unexpected error:", sys.exc_info()

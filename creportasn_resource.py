@@ -39,6 +39,7 @@ class CReportASNResource(Resource):
                            "B",  # creportasn_sequence
                            "B",  # lastCallbackSequence
                            "b",  # parentRssi
+                           "?",  # is_emergency
                            ]
             coap_format_str = ''.join(coap_format)
 
@@ -59,6 +60,7 @@ class CReportASNResource(Resource):
             error_counter = data[15]
             last_callback_sequence = data[17]
             parent_rssi = data[18]
+            is_emergency = int(data[19])
 
             print "received from {0}".format(mote)
             print "Start: {0}; End: {1}; diff: {2}".format(start_asn, end_asn, end_asn - start_asn)
@@ -74,6 +76,7 @@ class CReportASNResource(Resource):
             print "PDR: {0}".format(float(txACK) / float(tx))
             print "last_callback_sequence: {0}".format(last_callback_sequence)
             print "parent rssi: {0}".format(parent_rssi)
+            print "is_emergency: {0}".format(is_emergency)
             print "---------------------------------------------------------"
 
 
@@ -99,13 +102,11 @@ class CReportASNResource(Resource):
             db = MySQLdb.connect("localhost","root","sakimaru","ITRI_OpenWSN" )
             cursor = db.cursor()
 
-            command = "INSERT INTO `delay` (`id`, `mote`, `start_asn`, `end_asn`, `diff`, `numDesync`, `myRank`, `tx`, `txACK`, `packet_sequence`, `last_success_left`, `error_counter`, `last_callback_sequence`, `parent_rssi`, `created_at`) VALUE (NULL, '{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}', '{11}', '{12}', '{13}')".format(
-                mote, start_asn, end_asn, end_asn - start_asn, numDesync, myrank, tx, txACK, packet_sequence,
-                last_success_left, error_counter, last_callback_sequence, parent_rssi, currtime)
-
+            # command = "INSERT INTO `delay` (`id`, `mote`, `start_asn`, `end_asn`, `diff`, `numDesync`, `myRank`, `tx`, `txACK`, `packet_sequence`, `last_success_left`, `error_counter`, `last_callback_sequence`, `parent_rssi`, `is_emergency`, `created_at`) VALUE (NULL, '{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}', '{11}', '{12}', '{13}', '{14}')".format(
+            #     mote, start_asn, end_asn, end_asn - start_asn, numDesync, myrank, tx, txACK, packet_sequence,
+            #     last_success_left, error_counter, last_callback_sequence, parent_rssi, is_emergency, currtime)
+            command = "INSERT INTO delay(mote, start_asn, end_asn, diff, numDesync, myRank, tx, txACK, packet_sequence, last_success_left, error_counter, last_callback_sequence, parent_rssi, is_emergency, created_at) VALUES('%s','%d', '%d', '%d', '%d', '%d','%d', '%d', '%d', '%d','%d','%d', '%d','%d', '%s') "%(mote, start_asn, end_asn, end_asn - start_asn, numDesync, myrank, tx, txACK, packet_sequence,last_success_left, error_counter, last_callback_sequence, parent_rssi, is_emergency ,currtime)
             topology_sql = "INSERT INTO itri_topology_mote(mac_addr, my_rank, p_mac_addr, p_rank, p_rssi, PDR, tx, txack, error_counter, sn, datetime) VALUES ('%s','%d', '%s', '%d', '%d', '%.2f','%d', '%d', '%d', '%d','%s') "%(address, myrank, hex(parentAddr), parantRank, parentRssi, PDR, tx, txACK, error_counter, counter, currtime)
-
-
 
             try:
                 cursor.execute(command)
